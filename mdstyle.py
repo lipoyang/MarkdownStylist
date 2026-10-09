@@ -9,7 +9,7 @@ from tkinterdnd2 import DND_FILES, TkinterDnD
 from html import escape
 
 # 設定ファイル（スクリプトと同じフォルダ）
-CONFIG_FILE = Path(__file__).with_name("mdhead_gui.json")
+CONFIG_FILE = Path(__file__).with_name("mdstyle.json")
 
 
 def load_settings():
@@ -198,7 +198,7 @@ def convert():
 # ---------- GUI ----------
 
 root = TkinterDnD.Tk()
-root.title("Markdown 見出し変換")
+root.title("Markdown スタイル変換")
 root.geometry("760x230")
 root.minsize(600, 230)
 

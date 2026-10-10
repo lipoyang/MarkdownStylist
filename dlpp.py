@@ -9,12 +9,11 @@ import requests
 from bs4 import BeautifulSoup
 
 
-# 設定ファイル（ユーザーのホームフォルダに保存）
-CONFIG_FILE = Path.home() / ".protopedia_downloader.json"
+# 設定ファイル（スクリプトと同じフォルダ）
+CONFIG_FILE = Path(__file__).with_name("dlpp.json")
 
-
+# 前回の設定を読み込む
 def load_config():
-    """前回の設定を読み込む"""
     try:
         with open(CONFIG_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
@@ -22,8 +21,8 @@ def load_config():
         return {}
 
 
+# 現在の設定を保存する
 def save_config():
-    """現在の設定を保存する"""
     config = {
         "prototype_id": prototype_id_var.get(),
         "output_dir": output_dir_var.get(),
@@ -38,8 +37,8 @@ def save_config():
         )
 
 
+# 出力先フォルダを選択する
 def choose_output_dir():
-    """出力先フォルダを選択する"""
     initial_dir = output_dir_var.get() or str(Path.home())
 
     directory = filedialog.askdirectory(
@@ -53,8 +52,8 @@ def choose_output_dir():
         save_config()
 
 
+# 作品ページを取得して2つのMarkdownファイルを保存する
 def download_files():
-    """作品ページを取得して2つのMarkdownファイルを保存する"""
     prototype_id = prototype_id_var.get().strip()
     output_dir = output_dir_var.get().strip()
 
@@ -136,9 +135,10 @@ def download_files():
     threading.Thread(target=worker, daemon=True).start()
 
 
+# 完了メッセージ
 def finish_success(file_a, file_b):
     download_button.config(state="normal")
-    status_var.set("保存が完了しました。")
+    status_var.set("")
 
     messagebox.showinfo(
         "完了",
@@ -147,9 +147,10 @@ def finish_success(file_a, file_b):
     )
 
 
+# エラーメッセージ
 def finish_error(error):
     download_button.config(state="normal")
-    status_var.set("取得・保存に失敗しました。")
+    status_var.set("")
 
     messagebox.showerror(
         "エラー",
@@ -157,12 +158,7 @@ def finish_error(error):
     )
 
 
-def on_close():
-    save_config()
-    root.destroy()
-
-
-# --- GUIの構築 ---
+# ---------- GUI ----------
 
 root = tk.Tk()
 root.title("ProtoPedia Markdown取得")
@@ -176,7 +172,7 @@ prototype_id_var = tk.StringVar(
 output_dir_var = tk.StringVar(
     value=config.get("output_dir", str(Path.home()))
 )
-status_var = tk.StringVar(value="作品番号を入力してください。")
+status_var = tk.StringVar(value="")
 
 frame = ttk.Frame(root, padding=16)
 frame.grid(row=0, column=0, sticky="nsew")
@@ -220,7 +216,7 @@ ttk.Label(
     frame, textvariable=status_var, wraplength=380
 ).grid(row=3, column=0, columnspan=3, sticky="w", pady=4)
 
-root.protocol("WM_DELETE_WINDOW", on_close)
+root.protocol("WM_DELETE_WINDOW", lambda: (save_config(), root.destroy()))
 
 prototype_entry.focus_set()
 root.mainloop()

@@ -12,16 +12,16 @@ from html import escape
 CONFIG_FILE = Path(__file__).with_name("mdstyle.json")
 
 
+# 前回の設定を読み込む
 def load_settings():
-    #前回の設定を読み込む。
     try:
         return json.loads(CONFIG_FILE.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return {}
 
 
+# 現在の設定を保存する
 def save_settings():
-    #現在の設定を保存する。
     settings = {
         "markdown": markdown_var.get(),
         "css": css_var.get(),
@@ -39,8 +39,8 @@ def save_settings():
         )
 
 
+# CSSからh1、h2、h3のスタイルを取得する
 def load_css_styles(css_file):
-    #CSSからh1、h2、h3のスタイルを取得する。
     css = Path(css_file).read_text(encoding="utf-8")
     rules = tinycss2.parse_stylesheet(
         css, skip_comments=True, skip_whitespace=True
@@ -69,8 +69,8 @@ def load_css_styles(css_file):
     return styles
 
 
+# Markdownの見出しをインラインスタイル付きHTMLに変換する
 def convert_markdown(md_file, css_file):
-    #Markdownの見出しをインラインスタイル付きHTMLに変換する。
     markdown = Path(md_file).read_text(encoding="utf-8")
     styles = load_css_styles(css_file)
 
@@ -84,7 +84,6 @@ def convert_markdown(md_file, css_file):
             for name, value in styles[tag].items()
         )
 
-        # 見出し本文はMarkdownの文字列として維持する
         if style:
             return (
                 f'<{tag} style="{escape(style, quote=True)}">'
@@ -100,6 +99,7 @@ def convert_markdown(md_file, css_file):
     return pattern.sub(replace_heading, markdown)
 
 
+# Markdownファイルを選択する
 def choose_markdown():
     path = filedialog.askopenfilename(
         title="Markdownファイルを選択",
@@ -115,6 +115,7 @@ def choose_markdown():
         save_settings()
 
 
+# CSSファイルを選択する
 def choose_css():
     path = filedialog.askopenfilename(
         title="CSSファイルを選択",
@@ -128,6 +129,7 @@ def choose_css():
         save_settings()
 
 
+# 出力先を選択する
 def choose_output():
     path = filedialog.asksaveasfilename(
         title="出力先を選択",
@@ -142,8 +144,8 @@ def choose_output():
         save_settings()
 
 
+# ドロップされたファイルのパスを入力欄に設定する
 def on_drop(event, variable):
-    # ドロップされたファイルのパスを入力欄に設定する。
     try:
         paths = root.tk.splitlist(event.data)
         if not paths:
@@ -160,6 +162,7 @@ def on_drop(event, variable):
         messagebox.showerror("エラー", str(e))
 
 
+# Markdownをスタイル付きHTMLに変換する
 def convert():
     md_file = markdown_var.get().strip()
     css_file = css_var.get().strip()
@@ -208,6 +211,7 @@ css_var = tk.StringVar(value=settings.get("css", ""))
 output_var = tk.StringVar(value=settings.get("output", ""))
 
 
+# GUIにファイル選択の行を追加する
 def add_file_row(row, label, variable, browse_command, droppable=True):
     tk.Label(root, text=label, width=12, anchor="w").grid(
         row=row, column=0, padx=(10, 4), pady=8, sticky="w"

@@ -13,7 +13,7 @@ CONFIG_FILE = Path(__file__).with_name("mdstyle.json")
 
 
 def load_settings():
-    """前回の設定を読み込む。"""
+    #前回の設定を読み込む。
     try:
         return json.loads(CONFIG_FILE.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
@@ -21,7 +21,7 @@ def load_settings():
 
 
 def save_settings():
-    """現在の設定を保存する。"""
+    #現在の設定を保存する。
     settings = {
         "markdown": markdown_var.get(),
         "css": css_var.get(),
@@ -40,7 +40,7 @@ def save_settings():
 
 
 def load_css_styles(css_file):
-    """CSSからh1、h2、h3のスタイルを取得する。"""
+    #CSSからh1、h2、h3のスタイルを取得する。
     css = Path(css_file).read_text(encoding="utf-8")
     rules = tinycss2.parse_stylesheet(
         css, skip_comments=True, skip_whitespace=True
@@ -70,7 +70,7 @@ def load_css_styles(css_file):
 
 
 def convert_markdown(md_file, css_file):
-    """Markdownの見出しをインラインスタイル付きHTMLに変換する。"""
+    #Markdownの見出しをインラインスタイル付きHTMLに変換する。
     markdown = Path(md_file).read_text(encoding="utf-8")
     styles = load_css_styles(css_file)
 
@@ -86,7 +86,6 @@ def convert_markdown(md_file, css_file):
 
         # 見出し本文はMarkdownの文字列として維持する
         if style:
-            # from html import escape
             return (
                 f'<{tag} style="{escape(style, quote=True)}">'
                 f'{text}</{tag}>'
@@ -144,7 +143,7 @@ def choose_output():
 
 
 def on_drop(event, variable):
-    """ドロップされたファイルのパスを入力欄に設定する。"""
+    # ドロップされたファイルのパスを入力欄に設定する。
     try:
         paths = root.tk.splitlist(event.data)
         if not paths:

@@ -1,6 +1,5 @@
 import json
 import re
-import sys
 import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog, messagebox
@@ -162,23 +161,23 @@ def on_drop(event, variable):
         messagebox.showerror("エラー", str(e))
 
 
-# Markdownをスタイル付きHTMLに変換する
-def convert():
+# 入力ファイルを検証してHTML文字列を取得する
+def get_converted_html():
     md_file = markdown_var.get().strip()
     css_file = css_var.get().strip()
-    output_file = output_var.get().strip()
 
     if not md_file or not Path(md_file).is_file():
-        messagebox.showerror(
-            "入力エラー", "Markdownファイルを選択してください。"
-        )
-        return
+        raise ValueError("Markdownファイルを選択してください。")
 
     if not css_file or not Path(css_file).is_file():
-        messagebox.showerror(
-            "入力エラー", "CSSファイルを選択してください。"
-        )
-        return
+        raise ValueError("CSSファイルを選択してください。")
+
+    return convert_markdown(md_file, css_file)
+
+
+# Markdownをスタイル付きHTMLに変換して保存する
+def convert():
+    output_file = output_var.get().strip()
 
     if not output_file:
         messagebox.showerror(
@@ -187,7 +186,7 @@ def convert():
         return
 
     try:
-        result = convert_markdown(md_file, css_file)
+        result = get_converted_html()
         Path(output_file).write_text(result, encoding="utf-8")
         save_settings()
         messagebox.showinfo(
@@ -197,12 +196,32 @@ def convert():
         messagebox.showerror("変換エラー", str(e))
 
 
+# 変換結果をクリップボードにコピーする
+def copy_to_clipboard():
+    try:
+        result = get_converted_html()
+
+        root.clipboard_clear()
+        root.clipboard_append(result)
+        root.update()  # クリップボードへの反映を確実にする
+
+        save_settings()
+
+        messagebox.showinfo(
+            "コピー完了",
+            "変換結果をクリップボードにコピーしました。\n\n"
+            "貼り付け先で Ctrl+V を押してください。",
+        )
+    except (OSError, ValueError, tk.TclError) as e:
+        messagebox.showerror("コピーエラー", str(e))
+
+
 # ---------- GUI ----------
 
 root = TkinterDnD.Tk()
 root.title("Markdown スタイル変換")
-root.geometry("760x230")
-root.minsize(600, 230)
+root.geometry("760x280")
+root.minsize(600, 280)
 
 settings = load_settings()
 
@@ -252,13 +271,25 @@ tk.Label(
     anchor="w",
 ).grid(row=3, column=0, columnspan=3, padx=12, pady=(0, 8), sticky="w")
 
+# ボタンを横並びに配置する
+button_frame = tk.Frame(root)
+button_frame.grid(row=4, column=0, columnspan=3, pady=8)
+
 tk.Button(
-    root,
+    button_frame,
     text="変換して保存",
     command=convert,
     width=18,
     height=2,
-).grid(row=4, column=0, columnspan=3, pady=8)
+).pack(side="left", padx=8)
+
+tk.Button(
+    button_frame,
+    text="変換してクリップボードにコピー",
+    command=copy_to_clipboard,
+    width=28,
+    height=2,
+).pack(side="left", padx=8)
 
 root.protocol("WM_DELETE_WINDOW", lambda: (save_settings(), root.destroy()))
 root.mainloop()

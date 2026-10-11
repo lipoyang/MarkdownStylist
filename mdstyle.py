@@ -46,6 +46,7 @@ def load_css_styles(css_file):
     )
 
     styles = {"h1": {}, "h2": {}, "h3": {}, "h4": {}, "h5": {}, "h6": {}}
+    styles["blockquote"] = {}
 
     for rule in rules:
         if rule.type != "qualified-rule":
@@ -73,16 +74,19 @@ def convert_markdown(md_file, css_file):
     markdown = Path(md_file).read_text(encoding="utf-8")
     styles = load_css_styles(css_file)
 
+    # CSSスタイルをインライン用文字列にする
+    def make_style(tag):
+        return "; ".join(
+            f"{name}: {value}"
+            for name, value in styles[tag].items()
+        )
+
     # 見出しを変換する
     def replace_heading(match):
         level = len(match.group(1))
         tag = f"h{level}"
         text = escape(match.group(2).strip())
-
-        style = "; ".join(
-            f"{name}: {value}"
-            for name, value in styles[tag].items()
-        )
+        style = make_style(tag)
 
         if style:
             return (
@@ -92,11 +96,11 @@ def convert_markdown(md_file, css_file):
 
         return f"<{tag}>{text}</{tag}>"
 
-    pattern = re.compile(
+    heading_pattern = re.compile(
         r"^(#{1,6})[ \t]+(.+?)[ \t]*#*[ \t]*$",
         re.MULTILINE,
     )
-    markdown = pattern.sub(replace_heading, markdown)
+    markdown = heading_pattern.sub(replace_heading, markdown)
 
     # Markdownの画像記法をimg要素に変換する
     def replace_image(match):
@@ -118,18 +122,59 @@ def convert_markdown(md_file, css_file):
         src = escape(image_path, quote=True)
 
         if width is not None:
-            return (
-                f'<img src="{src}" alt="{alt}" '
-                f'width="{width}">'
-            )
+            return f'<img src="{src}" alt="{alt}" width="{width}">'
 
         return f'<img src="{src}" alt="{alt}">'
 
-    image_pattern = re.compile(
-        r"!\[([^\]]*)\]\(([^)\s]+)\)"
+    image_pattern = re.compile(r"!\[([^\]]*)\]\(([^)\s]+)\)")
+    markdown = image_pattern.sub(replace_image, markdown)
+
+    # 引用を変換する
+    quote_pattern = re.compile(
+        r"^(?:>[ \t]?(.*))(?:\n|$)",
+        re.MULTILINE,
     )
 
-    return image_pattern.sub(replace_image, markdown)
+    def replace_quote(match):
+        return match.group(1)
+
+    # 引用行を一時的に抽出し、連続する引用行をまとめる
+    lines = markdown.splitlines()
+    result = []
+    quote_lines = []
+
+    def flush_quote():
+        if not quote_lines:
+            return
+
+        content = "\n".join(quote_lines)
+        style = make_style("blockquote")
+
+        if style:
+            result.append(
+                f'<blockquote style="{escape(style, quote=True)}">\n'
+                f'{content}\n</blockquote>'
+            )
+        else:
+            result.append(
+                f"<blockquote>\n{content}\n</blockquote>"
+            )
+
+        quote_lines.clear()
+
+    for line in lines:
+        match = re.match(r"^[ \t]*>[ \t]?(.*)$", line)
+
+        if match:
+            # 引用本文内のHTML特殊文字をエスケープ
+            quote_lines.append(escape(match.group(1)))
+        else:
+            flush_quote()
+            result.append(line)
+
+    flush_quote()
+
+    return "\n".join(result)
 
 
 # Markdownファイルを選択する

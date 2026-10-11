@@ -45,7 +45,7 @@ def load_css_styles(css_file):
         css, skip_comments=True, skip_whitespace=True
     )
 
-    styles = {"h1": {}, "h2": {}, "h3": {}}
+    styles = {"h1": {}, "h2": {}, "h3": {}, "h4": {}, "h5": {}, "h6": {}}
 
     for rule in rules:
         if rule.type != "qualified-rule":
@@ -92,7 +92,7 @@ def convert_markdown(md_file, css_file):
         return f"<{tag}>{text}</{tag}>"
 
     pattern = re.compile(
-        r"^(#{1,3})[ \t]+(.+?)[ \t]*#*[ \t]*$",
+        r"^(#{1,6})[ \t]+(.+?)[ \t]*#*[ \t]*$",
         re.MULTILINE,
     )
     return pattern.sub(replace_heading, markdown)

@@ -9,5 +9,22 @@ h2 {
 }
 
 h3 {
+    color: green;
     font-weight: bold;
+}
+
+h4 {
+    color: purple;
+    font-size: 1.2em;
+}
+
+h5 {
+    color: orange;
+    font-size: 1.1em;
+}
+
+h6 {
+    color: brown;
+    font-size: 1em;
+    font-weight: normal;
 }

@@ -68,11 +68,12 @@ def load_css_styles(css_file):
     return styles
 
 
-# Markdownの見出しをインラインスタイル付きHTMLに変換する
+# Markdownをインラインスタイル付きHTMLに変換する
 def convert_markdown(md_file, css_file):
     markdown = Path(md_file).read_text(encoding="utf-8")
     styles = load_css_styles(css_file)
 
+    # 見出しを変換する
     def replace_heading(match):
         level = len(match.group(1))
         tag = f"h{level}"
@@ -95,7 +96,40 @@ def convert_markdown(md_file, css_file):
         r"^(#{1,6})[ \t]+(.+?)[ \t]*#*[ \t]*$",
         re.MULTILINE,
     )
-    return pattern.sub(replace_heading, markdown)
+    markdown = pattern.sub(replace_heading, markdown)
+
+    # Markdownの画像記法をimg要素に変換する
+    def replace_image(match):
+        alt = escape(match.group(1), quote=True)
+        image_path = match.group(2).strip()
+
+        # ファイル名末尾の #数値を横幅として取得
+        width = None
+        width_match = re.search(r"#([0-9]+)$", image_path)
+
+        if width_match:
+            width = int(width_match.group(1))
+            image_path = image_path[:width_match.start()]
+
+            # 0pxなどの無効な指定を許容しない
+            if width <= 0:
+                width = None
+
+        src = escape(image_path, quote=True)
+
+        if width is not None:
+            return (
+                f'<img src="{src}" alt="{alt}" '
+                f'width="{width}">'
+            )
+
+        return f'<img src="{src}" alt="{alt}">'
+
+    image_pattern = re.compile(
+        r"!\[([^\]]*)\]\(([^)\s]+)\)"
+    )
+
+    return image_pattern.sub(replace_image, markdown)
 
 
 # Markdownファイルを選択する

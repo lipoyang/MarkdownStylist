@@ -122,9 +122,11 @@ def convert_markdown(md_file, css_file):
         src = escape(image_path, quote=True)
 
         if width is not None:
-            return f'<img src="{src}" alt="{alt}" width="{width}">'
+            img = f'<img src="{src}" alt="{alt}" width="{width}">'
+        else:
+            img = f'<img src="{src}" alt="{alt}">'
 
-        return f'<img src="{src}" alt="{alt}">'
+        return f"<p>{img}</p>"
 
     image_pattern = re.compile(r"!\[([^\]]*)\]\(([^)\s]+)\)")
     markdown = image_pattern.sub(replace_image, markdown)
@@ -167,7 +169,16 @@ def convert_markdown(md_file, css_file):
 
         if match:
             # 引用本文内のHTML特殊文字をエスケープ
-            quote_lines.append(escape(match.group(1)))
+            # ただし、行末の半角スペース2つ以上を <br/> に変換
+            text = match.group(1)
+
+            if re.search(r" {2,}$", text):
+                text = re.sub(r" {2,}$", "", text)
+                text = escape(text) + "<br/>"
+            else:
+                text = escape(text)
+
+            quote_lines.append(text)
         else:
             flush_quote()
             result.append(line)

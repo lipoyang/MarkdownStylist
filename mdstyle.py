@@ -74,6 +74,20 @@ def convert_markdown(md_file, css_file):
     markdown = Path(md_file).read_text(encoding="utf-8")
     styles = load_css_styles(css_file)
 
+    # コードブロックを一時退避する
+    code_blocks = []
+
+    def save_code_block(match):
+        code_blocks.append(match.group(0))
+        return f"@@CODEBLOCK{len(code_blocks) - 1}@@"
+
+    markdown = re.sub(
+        r"^[ \t]*```.*?^[ \t]*```[ \t]*$",
+        save_code_block,
+        markdown,
+        flags=re.MULTILINE | re.DOTALL,
+    )
+
     # CSSスタイルをインライン用文字列にする
     def make_style(tag):
         return "; ".join(
@@ -185,7 +199,13 @@ def convert_markdown(md_file, css_file):
 
     flush_quote()
 
-    return "\n".join(result)
+    html = "\n".join(result)
+
+    # コードブロックを元に戻す
+    for i, code in enumerate(code_blocks):
+        html = html.replace(f"@@CODEBLOCK{i}@@", code)
+
+    return html
 
 
 # Markdownファイルを選択する

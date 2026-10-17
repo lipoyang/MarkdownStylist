@@ -1,4 +1,4 @@
-# MarkdownにCSSを適用する簡易ツール
+# MarkdownにCSSを適用したHTMLを生成する簡易ツール
 
 Pythonで動作する簡易的なGUIツールです。
 
